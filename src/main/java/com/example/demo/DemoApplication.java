@@ -16,7 +16,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 @SpringBootApplication
 public class DemoApplication implements CommandLineRunner {
-
+//TEST
     public static File[] files;
     public static int count = -1;
     public static String fileName;

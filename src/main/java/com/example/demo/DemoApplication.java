@@ -48,15 +48,17 @@ public class DemoApplication implements CommandLineRunner {
                     saxParser.parse(file, handler);
                     System.out.println("File " + file.getName() + " has been parsed ");
                     List<ScrapedDocketData> scrapedDocketDataList = handler.getScrapedDocketDataList();
-                    System.out.println("Dockets from " + file.getName() + " have been added to the list");
-                    int filesNumber = scrapedDocketDataList.size();
-                    AtomicInteger counter = new AtomicInteger();
-                    scrapedDocketDataList.forEach(i -> {
-                        scrapedDocketDataRepository.save(i);
-                        System.out.printf("Processing docket (legacy id = %s) number %d out of %d%n", i.getLegacyId(), counter.getAndIncrement(), filesNumber);
-                        amountOfDockets++;
-                    });
-                    System.out.println("Amount of dockets processed: " + amountOfDockets);
+                    if (!scrapedDocketDataList.isEmpty()) {
+                        System.out.println("Dockets from " + file.getName() + " have been added to the list");
+                        int filesNumber = scrapedDocketDataList.size();
+                        AtomicInteger counter = new AtomicInteger();
+                        scrapedDocketDataList.forEach(i -> {
+                            scrapedDocketDataRepository.save(i);
+                            System.out.printf("Processing docket (legacy id = %s) number %d out of %d%n", i.getLegacyId(), counter.getAndIncrement(), filesNumber);
+                            amountOfDockets++;
+                        });
+                        System.out.println("Amount of dockets processed: " + amountOfDockets);
+                    }
                 }
             } else {
                 throw new Exception("There are no files to persist!");

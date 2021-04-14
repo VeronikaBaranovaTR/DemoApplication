@@ -2,8 +2,12 @@ package com.example.demo.handler;
 
 import com.example.demo.entity.ScrapedDocketData;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
+import org.jsoup.select.Elements;
 import org.xml.sax.Attributes;
 import org.xml.sax.helpers.DefaultHandler;
 
@@ -16,9 +20,11 @@ import java.util.List;
 import static com.example.demo.DemoApplication.fileName;
 
 public class TXHarrisDistrictHandler extends DefaultHandler {
+    private static final Logger logger = LogManager.getLogger("com.example.demo.handler.TXHarrisDistrictHandler");
     private boolean timeToSave;
     private StringBuilder builder;
     private List<ScrapedDocketData> scrapedDocketDataList = new ArrayList<>();
+
     public List<ScrapedDocketData> getScrapedDocketDataList() {
         return scrapedDocketDataList;
     }
@@ -55,9 +61,29 @@ public class TXHarrisDistrictHandler extends DefaultHandler {
     }
 
     private void processDocket(String oneDocket) {
-        ScrapedDocketData scrapedDocketData = new ScrapedDocketData();
         Document doc = Jsoup.parse(oneDocket);
         String docketNum = removeMetaData(doc.getElementsByTag("md.docketnum").toString());
+        String vendorName = "";
+        long vendorId = 0;
+        Elements updateBlock = doc.getElementsByTag("update.link.block");
+        if (!updateBlock.isEmpty()) {
+            Elements parameterValue = updateBlock.get(0).getElementsByTag("parameter.value");
+            for (Element vendorElem : parameterValue) {
+                if (vendorElem.text().matches("(?i)[a-z]+")) {
+                    vendorName = vendorElem.text();
+                }
+            }
+            if ("district".equalsIgnoreCase(vendorName)) {
+                vendorId = 149L;
+            } else if ("county".equalsIgnoreCase(vendorName)) {
+                vendorId = 150L;
+            } else {
+                logger.error("Docket with number: " + docketNum + " has an unknown vendor: " + vendorName);
+                return;
+            }
+        }
+
+        ScrapedDocketData scrapedDocketData = new ScrapedDocketData();
         scrapedDocketData.setDocketNumber(docketNum);
         String caseType = doc.getElementsByTag("md.case.type").toString()
                 .replaceAll("(?i)<[a-z]+\\.[a-z]+\\.[a-z]+>", "")
@@ -88,7 +114,7 @@ public class TXHarrisDistrictHandler extends DefaultHandler {
         scrapedDocketData.setLegacyId(legacyId);
         scrapedDocketData.setLastSourceFilename(fileName);
         scrapedDocketData.setWestlawClusterName("N_DTXHARRIS");
-        scrapedDocketData.setVendor(149L);
+        scrapedDocketData.setVendor(vendorId);
         scrapedDocketData.setScrapeType("N_EXTRACT");
         scrapedDocketData.setSubdivisionName("Harris");
         scrapedDocketData.setDocketDataFields(oneDocket);

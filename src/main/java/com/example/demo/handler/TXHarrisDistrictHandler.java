@@ -64,7 +64,7 @@ public class TXHarrisDistrictHandler extends DefaultHandler {
         Document doc = Jsoup.parse(oneDocket);
         String docketNum = removeMetaData(doc.getElementsByTag("md.docketnum").toString());
         String vendorName = "";
-        long vendorId = 0;
+        long vendorId;
         Elements updateBlock = doc.getElementsByTag("update.link.block");
         if (!updateBlock.isEmpty()) {
             Elements parameterValue = updateBlock.get(0).getElementsByTag("parameter.value");
@@ -81,6 +81,8 @@ public class TXHarrisDistrictHandler extends DefaultHandler {
                 logger.error("Docket with number: " + docketNum + " has an unknown vendor: " + vendorName);
                 return;
             }
+        } else {
+            return;
         }
 
         ScrapedDocketData scrapedDocketData = new ScrapedDocketData();
